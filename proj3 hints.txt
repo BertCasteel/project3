@@ -1,0 +1,13 @@
+Output is put in log files?
+
+break down the four functions into the 5 supplied atomic operations
+
+Amir thinks that bonus points is easy
+
+mount function
+    if not doing bonus points, need to initialize new array (?)
+
+read function:
+    1) translate address into drum,block location - using division of block size, % of block size.
+    2) move head (first to drum, then its block)
+    3) might need to move to next block/drum (if length is long)
