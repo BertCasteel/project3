@@ -96,9 +96,11 @@ int smsa_vread( SMSA_VIRTUAL_ADDRESS addr, uint32_t len, unsigned char *buf ) {
     /* Set up iterator for reading from block; Will start reading from the offset
         (our addr might not start right on block boundary) */
     uint32_t i=offset;
+    // counter for how many bytes we've read so far
+    uint32_t bytesRead;
 
     // While we still need to read...
-    for (uint32_t bytesRead = 0; bytesRead < len; bytesRead++)
+    for (bytesRead = 0; bytesRead < len; bytesRead++)
     {
         // Move to the block to be read
         uint32_t seek_block_instr = MakeSmsaInstruction(SMSA_SEEK_BLOCK, 0, curBlock);
