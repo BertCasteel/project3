@@ -111,7 +111,7 @@ int smsa_vread( SMSA_VIRTUAL_ADDRESS addr, uint32_t len, unsigned char *buf ) {
         smsa_operation(read_disk_instr, temp_block_buffer);
 
         // Copy stuff from temp buffer to real buffer
-        for(i; i<SMSA_BLOCK_SIZE && bytesRead<len; )
+        for(; i<SMSA_BLOCK_SIZE && bytesRead<len; )
         {
             buf[bytesRead++] = temp_block_buffer[i++];
         }
