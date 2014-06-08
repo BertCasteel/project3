@@ -3,7 +3,7 @@
 //  File           : smsa_driver.c
 //  Description    : This is the driver for the SMSA simulator.
 //
-//   Author        : 
+//   Authors       : Kevin Beick & Robert Casteel
 //   Last Modified : 
 //
 

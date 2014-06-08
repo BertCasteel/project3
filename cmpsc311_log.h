@@ -19,6 +19,7 @@
 
 // Include files
 #include <stdio.h>
+#include <stdarg.h>
 
 //
 // Library Constants
