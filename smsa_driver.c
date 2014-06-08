@@ -22,6 +22,17 @@
 
 // Interfaces
 
+
+uint32_t MakeSmsaInstruction(SMSA_DISK_COMMAND opcode, uint32_t DrumID, uint32_t BlockID){
+    // Shift DrumID to right position in instruction
+    uint32_t ShiftedOpcode = opcode << 26;
+    // Shift DrumID to right position in instruction
+    uint32_t ShiftedDrum = DrumID << 22;
+    // Bitwise OR the codes together
+    return (uint32_t)(ShiftedOpcode|ShiftedDrum|BlockID);
+}
+
+
 ////////////////////////////////////////////////////////////////////////////////
 //
 // Function     : smsa_vmount
@@ -31,7 +42,8 @@
 // Outputs      : -1 if failure or 0 if successful
 
 int smsa_vmount( void ) {
-
+    uint32_t instruction = MakeSmsaInstruction(SMSA_MOUNT,0,0);
+    return smsa_operation(instruction,NULL);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -43,7 +55,8 @@ int smsa_vmount( void ) {
 // Outputs      : -1 if failure or 0 if successful
 
 int smsa_vunmount( void )  {
-
+    uint32_t instruction = MakeSmsaInstruction(SMSA_UNMOUNT,0,0);
+    return smsa_operation(instruction, NULL);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
