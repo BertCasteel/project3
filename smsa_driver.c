@@ -22,7 +22,7 @@
 
 // Interfaces
 
-
+// HELPERS
 uint32_t MakeSmsaInstruction(SMSA_DISK_COMMAND opcode, uint32_t DrumID, uint32_t BlockID){
     // Shift DrumID to right position in instruction
     uint32_t ShiftedOpcode = opcode << 26;
@@ -31,6 +31,17 @@ uint32_t MakeSmsaInstruction(SMSA_DISK_COMMAND opcode, uint32_t DrumID, uint32_t
     // Bitwise OR the codes together
     return (uint32_t)(ShiftedOpcode|ShiftedDrum|BlockID);
 }
+uint32_t GetDrumID(SMSA_VIRTUAL_ADDRESS addr){
+    return addr/SMSA_DISK_SIZE;
+}
+uint32_t GetBlockID(SMSA_VIRTUAL_ADDRESS addr){
+    return (addr%SMSA_DISK_SIZE)/SMSA_BLOCK_SIZE;
+}
+uint32_t GetOffset(SMSA_VIRTUAL_ADDRESS addr){
+    return addr%SMSA_BLOCK_SIZE;
+}
+
+
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -70,7 +81,52 @@ int smsa_vunmount( void )  {
 // Outputs      : -1 if failure or 0 if successful
 
 int smsa_vread( SMSA_VIRTUAL_ADDRESS addr, uint32_t len, unsigned char *buf ) {
+    // Translate Virtual Address to Drum, Block, and offset
+    uint32_t curDrum = GetDrumID(addr);
+    uint32_t curBlock= GetBlockID(addr);
+    uint32_t offset = GetOffset(addr);
 
+    // temp buffer used for smsa ops
+    unsigned char temp_block_buffer[SMSA_BLOCK_SIZE];
+
+    // Move to the drum to be read
+    uint32_t seek_drum_instr = MakeSmsaInstruction(SMSA_SEEK_DRUM, curDrum, 0);
+    smsa_operation(seek_drum_instr, NULL);
+
+    /* Set up iterator for reading from block; Will start reading from the offset
+        (our addr might not start right on block boundary) */
+    uint32_t i=offset;
+
+    // While we still need to read...
+    for (uint32_t bytesRead = 0; bytesRead < len; bytesRead++)
+    {
+        // Move to the block to be read
+        uint32_t seek_block_instr = MakeSmsaInstruction(SMSA_SEEK_BLOCK, 0, curBlock);
+        smsa_operation(seek_block_instr, NULL);
+
+        // Read block into temp buffer
+        uint32_t read_disk_instr = MakeSmsaInstruction(SMSA_DISK_READ, curDrum, curBlock);
+        smsa_operation(read_disk_instr, temp_block_buffer);
+
+        // Copy stuff from temp buffer to real buffer
+        for(i; i<SMSA_BLOCK_SIZE && bytesRead<len; )
+        {
+            buf[bytesRead++] = temp_block_buffer[i++];
+        }
+
+        // If we've read this entire drum (ie its last block), want to move to next drum.
+        // Else just move along to next block.
+        if(curBlock==255){
+            curDrum++;
+            curBlock = 0;
+            seek_drum_instr = MakeSmsaInstruction(SMSA_SEEK_DRUM,curDrum,0);
+            smsa_operation(seek_drum_instr,NULL);
+        }else{ curBlock++; }
+
+        // reset iterator to 0 - we will want all future readings to start at beginning of block
+        i = 0;
+    }
+    return 0;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
