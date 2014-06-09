@@ -142,7 +142,8 @@ int smsa_vread( SMSA_VIRTUAL_ADDRESS addr, uint32_t len, unsigned char *buf ) {
 // Outputs      : -1 if failure or 0 if successful
 
 int smsa_vwrite( SMSA_VIRTUAL_ADDRESS addr, uint32_t len, unsigned char *buf )  {
-    // Translate Virtual Address to Drum, Block, and offset
+ 
+ // Translate Virtual Address to Drum, Block, and offset
     uint32_t curDrum = GetDrumID(addr);
     uint32_t curBlock= GetBlockID(addr);
     uint32_t offset = GetOffset(addr);
@@ -154,11 +155,11 @@ int smsa_vwrite( SMSA_VIRTUAL_ADDRESS addr, uint32_t len, unsigned char *buf )  
     uint32_t seek_drum_instr = MakeSmsaInstruction(SMSA_SEEK_DRUM, curDrum, 0);
     smsa_operation(seek_drum_instr, NULL);
 
-    /* Set up iterator for writing to block; Will start writing from the offset
-        (our addr might not start right on block boundary) */
+    // Set up iterator for writing to block; Will start writing from the offset
+    //    (our addr might not start right on block boundary) 
     uint32_t i=offset;
 
-    unsigned char * writeHead = buff;
+    unsigned char * writeHead = buf;
     // counter for how many bytes we've read so far
     uint32_t bytesWritten;
 
@@ -170,15 +171,15 @@ int smsa_vwrite( SMSA_VIRTUAL_ADDRESS addr, uint32_t len, unsigned char *buf )  
         smsa_operation(seek_block_instr, NULL);
 
         // write block onto driver
-        uint32_t write_disk_instr = MakeSmsaInstruction(SMSA_DISK_READ, curDrum, curBlock);
-        smsa_operation(write_disk_instr, writeHead);
+        uint32_t write_disk_instr = MakeSmsaInstruction(SMSA_DISK_WRITE, curDrum, curBlock);
+       smsa_operation(write_disk_instr, writeHead);
 
         // Record how many bytes were written
         if (i != 0 ){
-            bytesWritten = SMSA_BLOCK_SIZE - i; 
+            bytesWritten += SMSA_BLOCK_SIZE - i; 
         }
         else {
-            bytesWritten = SMSA_BLOCK_SIZE;
+            bytesWritten += SMSA_BLOCK_SIZE;
         }
         //Update head pointer of the write buffer
         writeHead += bytesWritten;
