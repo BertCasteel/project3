@@ -103,7 +103,7 @@ int smsa_vread( SMSA_VIRTUAL_ADDRESS addr, uint32_t len, unsigned char *buf ) {
     for (bytesRead = 0; bytesRead < len; bytesRead++)
     {
         // Move to the block to be read
-        uint32_t seek_block_instr = MakeSmsaInstruction(SMSA_SEEK_BLOCK, 0, curBlock);
+        uint32_t seek_block_instr = MakeSmsaInstruction(SMSA_SEEK_BLOCK, curDrum, curBlock);
         smsa_operation(seek_block_instr, NULL);
 
         // Read block into temp buffer
@@ -142,49 +142,44 @@ int smsa_vread( SMSA_VIRTUAL_ADDRESS addr, uint32_t len, unsigned char *buf ) {
 // Outputs      : -1 if failure or 0 if successful
 
 int smsa_vwrite( SMSA_VIRTUAL_ADDRESS addr, uint32_t len, unsigned char *buf )  {
- 
- // Translate Virtual Address to Drum, Block, and offset
+// Translate Virtual Address to Drum, Block, and offset
     uint32_t curDrum = GetDrumID(addr);
     uint32_t curBlock= GetBlockID(addr);
     uint32_t offset = GetOffset(addr);
 
     // temp buffer used for smsa ops
-    //unsigned char temp_block_buffer[SMSA_BLOCK_SIZE];
+    unsigned char temp_block_buffer[SMSA_BLOCK_SIZE];
 
     // Move to the drum to be read
     uint32_t seek_drum_instr = MakeSmsaInstruction(SMSA_SEEK_DRUM, curDrum, 0);
     smsa_operation(seek_drum_instr, NULL);
 
-    // Set up iterator for writing to block; Will start writing from the offset
-    //    (our addr might not start right on block boundary) 
+    /* Set up iterator for reading from block; Will start reading from the offset
+        (our addr might not start right on block boundary) */
     uint32_t i=offset;
-
-    unsigned char * writeHead = buf;
     // counter for how many bytes we've read so far
     uint32_t bytesWritten;
 
     // While we still need to read...
     for (bytesWritten = 0; bytesWritten < len; bytesWritten++)
     {
-        // Move to the block to write to
-        uint32_t seek_block_instr = MakeSmsaInstruction(SMSA_SEEK_BLOCK, 0, curBlock);
+
+        // Copy stuff from temp buffer to real buffer
+        for(; i<SMSA_BLOCK_SIZE && bytesWritten<len; )
+        {
+            temp_block_buffer[i++] = buf[bytesWritten++];
+        }
+
+        // Move to the current block
+        uint32_t seek_block_instr = MakeSmsaInstruction(SMSA_SEEK_BLOCK, curDrum, curBlock);
         smsa_operation(seek_block_instr, NULL);
 
-        // write block onto driver
+        // write block from temp buffer
         uint32_t write_disk_instr = MakeSmsaInstruction(SMSA_DISK_WRITE, curDrum, curBlock);
-       smsa_operation(write_disk_instr, writeHead);
+        smsa_operation(write_disk_instr, temp_block_buffer);
 
-        // Record how many bytes were written
-        if (i != 0 ){
-            bytesWritten += SMSA_BLOCK_SIZE - i; 
-        }
-        else {
-            bytesWritten += SMSA_BLOCK_SIZE;
-        }
-        //Update head pointer of the write buffer
-        writeHead += bytesWritten;
 
-        // If we've written this entire drum (ie its last block), want to move to next drum.
+        // If we've read this entire drum (ie its last block), want to move to next drum.
         // Else just move along to next block.
         if(curBlock==255){
             curDrum++;
