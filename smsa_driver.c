@@ -90,7 +90,7 @@ int smsa_vread( SMSA_VIRTUAL_ADDRESS addr, uint32_t len, unsigned char *buf ) {
     unsigned char temp_block_buffer[SMSA_BLOCK_SIZE];
 
     // Move to the drum to be read
-    uint32_t seek_drum_instr = MakeSmsaInstruction(SMSA_SEEK_DRUM, curDrum, 0);
+    uint32_t seek_drum_instr = MakeSmsaInstruction(SMSA_SEEK_DRUM, curDrum, curBlock);
     smsa_operation(seek_drum_instr, NULL);
 
     /* Set up iterator for reading from block; Will start reading from the offset
@@ -150,8 +150,26 @@ int smsa_vwrite( SMSA_VIRTUAL_ADDRESS addr, uint32_t len, unsigned char *buf )  
     // temp buffer used for smsa ops
     unsigned char temp_block_buffer[SMSA_BLOCK_SIZE];
 
+	//If address is not on a block boundry, read in entire block into temp block to prevent writing over bytes outside of the address*/
+	if (offset > 0){
+	
+    	// Move to the drum to be read
+    	uint32_t seek_drum_instr = MakeSmsaInstruction(SMSA_SEEK_DRUM, curDrum, curBlock);
+    	smsa_operation(seek_drum_instr, NULL);
+
+        // Move to the block to be read
+        uint32_t seek_block_instr = MakeSmsaInstruction(SMSA_SEEK_BLOCK, curDrum, curBlock);
+        smsa_operation(seek_block_instr, NULL);
+
+        // Read block into temp buffer
+        uint32_t read_disk_instr = MakeSmsaInstruction(SMSA_DISK_READ, curDrum, curBlock);
+        smsa_operation(read_disk_instr, temp_block_buffer);
+
+
+}
+
     // Move to the drum to be read
-    uint32_t seek_drum_instr = MakeSmsaInstruction(SMSA_SEEK_DRUM, curDrum, 0);
+    uint32_t seek_drum_instr = MakeSmsaInstruction(SMSA_SEEK_DRUM, curDrum, curBlock);
     smsa_operation(seek_drum_instr, NULL);
 
     /* Set up iterator for reading from block; Will start reading from the offset
