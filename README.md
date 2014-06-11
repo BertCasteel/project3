@@ -10,7 +10,7 @@ Develop an implementation of a device driver for a virtual device, a large-scale
 * Several other files that were originally included in the started code tarball - we did not alter these.
 
 ###Compilation Instructions:
-cd into the project directory. Enter 'make' into the terminal to compile.  The executable is called 'smsasim' so enter `./smasasim` to run it.
+cd into the project directory. Enter 'make' into the terminal to compile.  The executable is called 'smsasim' so enter `./smasasim` to run it. Enter `./smasasim -h` for usage.
 
 
 ###General Comments:
