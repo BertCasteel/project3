@@ -86,6 +86,15 @@ int smsa_vread( SMSA_VIRTUAL_ADDRESS addr, uint32_t len, unsigned char *buf ) {
     uint32_t curBlock= GetBlockID(addr);
     uint32_t offset = GetOffset(addr);
 
+    if (len > 
+(SMSA_BLOCK_SIZE-offset) + 
+(SMSA_MAX_BLOCK_ID - (curBlock + 1)) * SMSA_BLOCK_SIZE +
+(SMSA_DISK_ARRAY_SIZE - (curDrum + 1))*(SMSA_MAX_BLOCK_ID * SMSA_BLOCK_SIZE)){
+	logMessage( LOG_INFO_LEVEL, "Too large of len");
+	return 0;
+}	
+
+
     // temp buffer used for smsa ops
     unsigned char temp_block_buffer[SMSA_BLOCK_SIZE];
 
@@ -146,6 +155,14 @@ int smsa_vwrite( SMSA_VIRTUAL_ADDRESS addr, uint32_t len, unsigned char *buf )  
     uint32_t curDrum = GetDrumID(addr);
     uint32_t curBlock= GetBlockID(addr);
     uint32_t offset = GetOffset(addr);
+
+    if (len > 
+(SMSA_BLOCK_SIZE-offset) + 
+(SMSA_MAX_BLOCK_ID - (curBlock + 1)) * SMSA_BLOCK_SIZE +
+(SMSA_DISK_ARRAY_SIZE - (curDrum + 1))*(SMSA_MAX_BLOCK_ID * SMSA_BLOCK_SIZE)){
+	logMessage( LOG_INFO_LEVEL, "Too large of len");
+	return 0;
+}	
 
     // temp buffer used for smsa ops
     unsigned char temp_block_buffer[SMSA_BLOCK_SIZE];
